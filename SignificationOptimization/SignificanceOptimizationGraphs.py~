@@ -1,0 +1,164 @@
+#!/usr/bin/env python
+
+#import commands
+import ROOT
+import math, time
+import sys
+
+from ROOT import gSystem
+from ROOT import *
+
+from ROOT import TCanvas, TGraph
+from ROOT import gROOT
+
+
+import numpy as np
+import matplotlib.pyplot as plt
+import math
+from math import sin
+from array import array
+
+
+
+
+#graph(inicio ptKbin, final ptKbin,inicio Bprobbin, final Bprobbin,inicio pdlbin, final pdlbin, nombre del array que va a variar)
+
+def graph(n1_i,n1_f,n2_i,n2_f,n3_i,n3_f,array):
+
+    #bins
+    ptKbin = [0.5,0.6,0.7,0.8,0.9,1.0]
+    Bprobbin = [0.01,0.02,0.03,0.04,0.05,0.06,0.07,0.08,0.09,0.1]
+    pdlbin = [2,3,4,5,6,7]
+    
+    signif = []
+    
+    for i in range(n1_i,n1_f):
+        
+        for j in range(n2_i,n2_f):
+            
+            for k in range(n3_i,n3_f):
+                PTK=int(ptKbin[i]*10.0)
+                BPRO=int(Bprobbin[j]*100.0)
+                PDL=int(pdlbin[k])
+                
+                text_file = open('../plots_signi/output_Signif_ptk{}_Bpro{}_cts{}.txt'.format(PTK,BPRO,PDL), 'r')
+                lines = text_file.readlines()
+                sig=float(lines[0])
+
+                signif.append(sig)
+                
+                text_file.close()
+
+                
+    W=800
+    H=600
+    Lum = "189.7 nb^{-1} (#it{p}Pb 8.16 TeV)"
+
+    canv = TCanvas('canv', "", W ,H )
+    canv.SetGrid() 
+    
+    #canv.cd()
+    tex1 = TLatex(0.98,0.95,Lum)
+    tex1.SetNDC()
+    tex1.SetTextAlign(31)
+    tex1.SetTextFont(42)
+    tex1.SetTextSize(0.05) 
+    tex1.SetLineWidth(2)
+    
+    tex2 = TLatex(0.10,0.95,"CMS")
+    tex2.SetNDC()
+    tex2.SetTextFont(61)
+    tex2.SetTextSize(0.05) 
+    tex2.SetLineWidth(2)
+    
+    tex3 = TLatex(0.19,0.95,"Preliminary")
+    tex3.SetNDC()
+    tex3.SetTextFont(52)
+    tex3.SetTextSize(0.05)
+    tex3.SetLineWidth(2)
+    
+    tex1.DrawLatex()
+    tex2.DrawLatex()
+    tex3.DrawLatex()
+
+    PTKBIN =np.array(ptKbin)
+    SIGNIF =np.array(signif)
+    
+    gr = TGraph(6,PTKBIN,SIGNIF)
+    
+    gr.SetMarkerColor( 4 )
+    gr.SetMarkerStyle( 21 )
+    gr.GetXaxis().CenterTitle(True)
+    gr.GetXaxis().SetTitle('pT(k) (GeV)')
+    gr.GetYaxis().CenterTitle(True)
+    gr.GetYaxis().SetTitle( 'Significance' )
+    gr.Draw()
+    
+    canv.Modified()
+    gPad.Update()
+    
+    if(array==ptKbin):
+
+        canv.SaveAs('plots_optsigni/optimizedsignificance_fixedBpro{}_fixedct{}.png'.format(Bprobbin[n2_i],pdlbin[n3_i]))
+        print('Plot with fixed Bpro = {} and fixed ct = {} DONE'.format(Bprobbin[n2_i],pdlbin[n3_i]))
+        
+        """
+        fig0 = plt.figure()
+        ax0 = fig0.add_subplot(1, 1, 1)
+        ax0.plot(array,signif,"o")
+        ax0.set_ylabel("Significance")
+        ax0.grid()
+        xlab = "pT(K)"
+        ax0.set_xlabel(xlab)
+        ax0.set_title("Sig vs pT(K)")
+        ax0.text(0.8, 56, 'Bprob={};  ct={}'.format(Bprobbin[n2_i],pdlbin[n3_i]), fontsize=12)
+        fig0.savefig('plots_optsigni/optimizedsignificance_fixedBpro{}_fixedct{}.png'.format(Bprobbin[n2_i],pdlbin[n3_i]))
+        print('Plot with fixed Bpro = {} and fixed ct = {} DONE'.format(Bprobbin[n2_i],pdlbin[n3_i]))
+        
+        
+    elif(array==Bprobbin):
+        fig1 = plt.figure()
+        ax1 = fig1.add_subplot(1, 1, 1)
+        ax1.plot(array,signif,"o")
+        ax1.set_ylabel("Significance")
+        ax1.grid()
+        xlab = "B probability";
+        ax1.set_xlabel(xlab)
+        ax1.set_title("Sig vs Bprob")
+        ax1.text(0.07, 63, 'pT(K)={};  ct={}'.format(ptKbin[n1_i],pdlbin[n3_i]), fontsize=12)
+        fig1.savefig('plots_optsigni/optimizedsignificance_fixedPtk{}_fixedct{}.png'.format(ptKbin[n1_i],pdlbin[n3_i]))
+        print("Plot with fixed pT(K) = {} and fixed ct = {} DONE".format(ptKbin[n1_i],pdlbin[n3_i]))
+    else:
+        fig2 = plt.figure()
+        ax2 = fig2.add_subplot(1, 1, 1)
+        ax2.plot(array,signif,"o")
+        ax2.set_ylabel("Significance")
+        ax2.grid()
+        xlab = "life time"
+        ax2.set_xlabel(xlab)
+        ax2.set_title ("Sig vs ct")
+        ax2.text(5, 56, 'pT(K)={};  Bprob={}'.format(ptKbin[n1_i],Bprobbin[n2_i]), fontsize=12)
+        fig2.savefig('plots_optsigni/optimizedsignificance_fixedPtk{}_fixedBpro{}.png'.format(ptKbin[n1_i],Bprobbin[n2_i]))
+        print("Plot with fixed pT(K) = {} and fixed Bprob = {} DONE".format(ptKbin[n1_i],Bprobbin[n2_i]))
+        """
+
+def main():
+
+    #bins
+    ptKbin = [0.5,0.6,0.7,0.8,0.9,1.0]
+    Bprobbin = [0.01,0.02,0.03,0.04,0.05,0.06,0.07,0.08,0.09,0.1]
+    pdlbin = [2,3,4,5,6,7]
+    
+    print(" ")
+    print('START')
+    print(" ")
+    
+    graph(0,6,0,1,4,5,ptKbin)
+
+    #graph(3,4,0,10,4,5,Bprobbin)
+
+    #graph(3,4,0,1,0,6,pdlbin)
+
+
+if __name__ == '__main__':
+    main()      

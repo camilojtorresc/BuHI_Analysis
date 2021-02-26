@@ -1,0 +1,28 @@
+[psi2s]
+Masa = 3.686 L(3.59 - 3.77) 
+J_lifetime_sig_data = 0 L(5. - 10000.) 
+J_lifetime_sig_mc = 0 L(-10000. - 10000.) //-INF - +INF
+abs_J_eta1 = 0 L(-100. - 100.)
+muon_thresh = 1.5 L(1.5 - 1000.)
+
+[psi2s_central]
+Masa = 3.686 L(3.59 - 3.77) 
+J_lifetime_sig_data = 0 L(5. - 10000.) 
+J_lifetime_sig_mc = 0 L(-10000. - 10000.) //-INF - +INF
+abs_J_eta1 = 0 L(0. - 1.) //central
+muon_thresh = 1.5 L(1.5 - 1000.)
+
+[psi2s_forward]
+Masa = 3.686 L(3.59 - 3.77) 
+J_lifetime_sig_data = 0 L(5. - 10000.)
+J_lifetime_sig_mc = 0 L(-10000. - 10000.)
+abs_J_eta1 = 0 L(1. - 100.) //forward
+muon_thresh = 1.5 L(1.5 - 1000.)
+
+[X3872full]
+Masa = 3.8695 L(3.77 - 3.97) //~0.002 está abajo psi', recalibrando...
+J_lifetime_sig_data = 0 L(-10000. - 10000.) 
+J_lifetime_sig_mc = 0 L(-10000. - 10000.) //-INF - +INF
+abs_J_eta1 = 0 L(-100. - 100.)
+muon_thresh = 1.0 L(1.0 - 1000.)
+

@@ -1,0 +1,22 @@
+[psi2s]
+peak_gaussian_mean =  3.686 L(3.59 - 3.77) 
+peak_gaussian_sigma =  0.0085 L(0.0001 - 0.5) 
+peak_gaussian_sigma2 =  0.02 L(0.0001 - 0.5) 
+peak_gaussian_width =  0.01 L(0.0001 - 0.5) 
+f_gauss =  0.65 L(0 - 1) 
+bkgd_poly_c1 =  0. L(-INF - +INF) 
+bkgd_poly_c2 =  0. L(-INF - +INF) 
+sidebandlow =  3.64 C L(-INF - +INF) 
+sidebandhigh =  3.73 C L(-INF - +INF) 
+
+[X3872]
+peak_gaussian_mean =  3.8695 C L(3.77 - 3.97)  //~0.002 está abajo psi', recalibrando...
+peak_gaussian_sigma =  0.016 L(0.0001 - 0.5) 
+peak_gaussian_sigma2 =  0.02 L(0.0001 - 0.5) //por ajustar 
+peak_gaussian_width =  0.01 L(0.0001 - 0.5) 
+f_gauss =  0.65 L(0 - 1)  //por ajustar
+bkgd_poly_c1 =  0. L(-INF - +INF) 
+bkgd_poly_c2 =  0. L(-INF - +INF) 
+sidebandlow =  3.8 C L(-INF - +INF) 
+sidebandhigh =  3.94 C L(-INF - +INF) 
+

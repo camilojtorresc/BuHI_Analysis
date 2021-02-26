@@ -1,0 +1,242 @@
+#include "classmcrootuple.C"
+
+#include <TROOT.h>
+#include "TMath.h"
+#include <iostream>
+#include <fstream>
+
+#include "RooPolyVar.h"
+#include "RooConstVar.h"
+#include "RooChi2Var.h"
+#include "RooMinuit.h"
+
+#include "RooFit.h"
+#include "RooFitResult.h"
+#include "RooGaussian.h"
+#include "RooExponential.h"
+#include "RooPolynomial.h"
+#include "RooChebychev.h"
+#include "RooAddPdf.h"
+
+#include "TPaveText.h"
+#include "TLegend.h"
+#include "TPad.h"
+#include "TCanvas.h"
+#include "TStyle.h"
+#include "TGaxis.h"
+#include "TAxis.h"
+#include "TLatex.h"
+#include "RooPlot.h"
+#include "RooHist.h"
+#include "TF1.h"
+#include "RooNumIntConfig.h"
+
+#include "RooDataSet.h"
+#include "RooRealVar.h"
+
+using namespace std;
+using namespace RooFit ;
+
+void Effy_Reco() {
+
+ gStyle->SetOptTitle(0);
+ gStyle->SetOptFit(0);
+ gStyle->SetOptStat(0); 
+ 
+ TChain * ch = new TChain("ntuple","");
+ ch->Add("../dataMC/Rootuple_Bu_JpsiK_2016HI-RecoGenbacht1.root/rootuple/ntuple");
+ ch->Add("../dataMC/Rootuple_Bu_JpsiK_2016HI-RecoGenbacht2.root/rootuple/ntuple");
+ 
+
+ TTree *tree = (TTree*)ch;
+ classmcrootuple t(tree);
+ Long64_t nentries = t.fChain->GetEntries();
+ cout<<" Entries : "<<nentries<<endl;
+ 
+ cout<<"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"<<endl;
+ cout<<" Reading data ..."<<nentries<<endl;
+ //return;
+
+ //define los arreglos to get the reco Efficiency
+ const Int_t bin = 4;
+ Double_t Effr0[bin];
+ Double_t ptvalT[bin];
+ Double_t ptaverage[bin];
+ Int_t ErncT = 0; Double_t EpwcT = 0;
+
+ Int_t nTen = nentries/10;
+ Int_t nbytes = 0, nb = 0;
+ for(Long64_t jentry=0; jentry<nentries;jentry++)
+ //for(Long64_t jentry=0; jentry<300000;jentry++)   
+   {
+     Long64_t ientry = t.LoadTree(jentry);
+     if (ientry < 0) break;
+     nb = t.fChain->GetEntry(jentry);   nbytes += nb;
+     if(jentry%nTen==0) cout<<10*(jentry/nTen)<<"%-"<<flush;
+     if(jentry==nentries-1) cout<<endl;
+     
+     if( (TMath::Abs(t.gen_bc_p4->Rapidity()) > 2.4) )continue;
+     if( (t.gen_bc_p4->Pt()<7.0) || (t.gen_bc_p4->Pt()>=50.0) )continue;
+     //ErncT = ErncT + 1;
+     //ErncT++;
+     
+     //"prefilter Effyciencia  no cuts"
+     if(t.gen_muon1_p4->Pt()>1.5 && t.gen_muon2_p4->Pt()>1.5 &&
+	(TMath::Abs(t.gen_muon1_p4->Eta()) < 2.5) && (TMath::Abs(t.gen_muon2_p4->Eta()) < 2.5) && t.gen_pion3_p4->Pt()>0.4 && (TMath::Abs(t.gen_pion3_p4->Eta()) < 2.5)){
+
+       ErncT++;
+       
+       if(t.gen_bc_p4->Pt()>=7.0 && t.gen_bc_p4->Pt()<10.0){Effr0[0]++; ptvalT[0]+=t.gen_bc_p4->Pt();}
+       if(t.gen_bc_p4->Pt()>=10.0 && t.gen_bc_p4->Pt()<15.0){Effr0[1]++; ptvalT[1]+=t.gen_bc_p4->Pt();}
+       if(t.gen_bc_p4->Pt()>=15.0 && t.gen_bc_p4->Pt()<20.0){Effr0[2]++; ptvalT[2]+=t.gen_bc_p4->Pt();}
+       if(t.gen_bc_p4->Pt()>=20.0 && t.gen_bc_p4->Pt()<50.0){Effr0[3]++; ptvalT[3]+=t.gen_bc_p4->Pt();}
+  	
+     }
+     
+   }
+ // *********************
+ // pT average per bin
+ cout <<"pt>7 y pt<10: " << ptvalT[0]/Effr0[0] << endl;
+ cout << endl;
+ //return;
+
+ 
+ //cout << ErncT << endl;
+ cout <<"pt>7 y pt<10: " << Effr0[0] << endl;
+ cout<< "entries after acceptance cuts: "<< ErncT << endl; // = 
+ Double_t Nvalt,NvaltE;
+ ifstream entrada1 ("../plots_ptbinsMC/output_BuFit_1_ptbins_7_50.txt");
+ if ( !entrada1 ) 
+    {
+      cout << "No se pudo abrir el archivo" << endl;
+      exit( 1 );
+    }
+ entrada1>> Nvalt >> NvaltE;
+ cout<< " "<< Nvalt << " +/- " << NvaltE << endl; 
+ Double_t Brret = Nvalt/ErncT;
+ //Double_t BrretE =  sqrt( ((Nvalt+1)*(ErncT-Nvalt+1)) / ((ErncT+3)*(ErncT+2)*(ErncT+2)) );
+ Double_t BrretE = Brret * sqrt( ( (NvaltE*NvaltE)/( Nvalt* Nvalt) ) + (1/ErncT) ); 
+ ofstream salidaT ("plotseffyBu/output_Burecofilterffy_Integrada.txt");
+ salidaT.is_open();
+ salidaT << Brret << " " << BrretE ;
+ salidaT.close();
+ //**********************
+
+ Double_t Effr1[bin] ;
+ Double_t Effr1E[bin] ;
+ Double_t file[bin+1] = {7,10,15,20,50};
+
+ for(int k=0; k<bin; k++){
+   Double_t Nval;
+   Double_t NvalE; 
+   ifstream entrada2 (Form("../plots_ptbinsMC/output_BuFit_1_ptbins_%1.0f_%1.0f.txt",file[k],file[k+1]));
+   //cout << "bins  " << file[k] << " - " << file[k+1] << endl;
+   if ( !entrada2 ) 
+    {
+      cout << "No se pudo abrir el archivo" << endl;
+      exit( 1 );
+    }
+   entrada2>> Nval >> NvalE;
+   Effr1[k] = Nval;
+   Effr1E[k] = NvalE;
+   cout<< "entries for pt bins. With cuts: "<< Effr1[k] << " +/- " << Effr1E[k] << endl; 
+ }
+
+ //define los arreglos para el bineado
+ Double_t Bpt[bin] = {8.5,12.5,17.5,35.0};
+ Double_t Bpte[bin] = {1.5,2.5,2.5,15.0};
+
+ //define los arreglos de Recofilter para usar en la eficiencia total 
+ Double_t Brre[bin] ;
+ Double_t BrreE[bin];
+ 
+ RooRealVar x_reco("x_reco","x_reco",7.0,50) ;
+ RooRealVar y_reco("y_reco","y_reco",0,200) ;
+ RooDataSet dxy_reco("dxy_reco","dxy_reco",RooArgSet(x_reco,y_reco),StoreError(RooArgSet(x_reco,y_reco))) ;    
+
+ for(int i=0; i<bin; i++){
+   x_reco = Bpt[i];
+   x_reco.setError(Bpte[i]) ;
+   
+   y_reco=(Effr1[i]/Effr0[i]);
+   //Double_t dive_reco = (Effr1[i]/Effr0[i])*sqrt( (1/Effr1[i]) + (1/Effr0[i]) ) ;// usando el error como la raiz cuadrada del numero
+   Double_t dive_reco =  sqrt( ((Effr1[i]+1)*(Effr0[i]-Effr1[i]+1))/((Effr0[i]+3)*(Effr0[i]+2)*(Effr0[i]+2)) ); // formula by d'Agostini
+   //Double_t dive_reco =  sqrt( Effr1[i]*(1-(Effr1[i]/Effr0[i])) )/Effr0[i] ;//Binomial model
+   
+   y_reco.setError(dive_reco);  
+   dxy_reco.add(RooArgSet(x_reco,y_reco)) ;
+   
+   cout<<"reco efficiency for pt bins:  "<<Effr1[i]/Effr0[i]<<"  +/- "<<dive_reco<<endl;  
+   Brre[i] = (Effr1[i]/Effr0[i]);
+   BrreE[i] = dive_reco;
+   ptaverage[i]=ptvalT[i]/Effr0[i];
+ }
+ dxy_reco.Print("v");
+
+ ofstream salida ("plotseffyBu/output_Burecofilterffy_pt.txt");
+ salida.is_open();
+ for(int ii=0; ii<bin; ii++){
+   salida << Brre[ii] << " " << BrreE[ii] << " ";
+ }
+ salida.close();
+
+ int H = 600;
+ int W = 800;
+ 
+ TCanvas *c1 = new TCanvas("c1","c1",50,50,W,H);
+ //c1->Divide(1,2);
+ c1->SetLeftMargin(0.125);
+ c1->SetRightMargin(0.01);
+ c1->SetTopMargin(0.09);
+ c1->SetBottomMargin(0.14); 
+ 
+ RooPlot* frame_reco = x_reco.frame(5.0,55.0,bin);
+ dxy_reco.plotOnXY(frame_reco,YVar(y_reco)) ;
+
+ frame_reco->SetYTitle("efficiency of reconstructing");
+ //frame_reco->SetYTitle("efficiency"); 
+ frame_reco->SetXTitle("p_{T}(J/#psi #it{K}^{+}) (GeV)");                                                                                                                    
+ frame_reco->SetLabelSize(0.05,"XY");
+ frame_reco->SetTitleSize(0.05,"XY");
+ frame_reco->GetYaxis()->CenterTitle();   
+ frame_reco->GetXaxis()->CenterTitle();
+ frame_reco->GetYaxis()->SetNdivisions(505,1);
+ //frame_reco->GetXaxis()->SetDecimals(2); 
+ frame_reco->GetXaxis()->SetNdivisions(504,1); 
+ frame_reco->SetTitleOffset(1.0,"X");
+ frame_reco->SetTitleOffset(0.9,"Y");
+ frame_reco->SetTitleSize(0.06,"XY");
+ //frame_reco->SetMinimum(0.2);
+ //frame_reco->SetMaximum(2200.0);
+ frame_reco->Draw();
+
+ TLatex *   tex1 = new TLatex(0.94,0.926,"MC simulation");
+ tex1->SetNDC();
+ tex1->SetTextAlign(31);
+ tex1->SetTextFont(42);
+ tex1->SetTextSize(0.04); 
+ tex1->SetLineWidth(2);
+ 
+ TLatex *tex2 = new TLatex(0.17,0.926,"CMS");
+ tex2->SetNDC();
+ tex2->SetTextFont(61);
+ tex2->SetTextSize(0.04); 
+ tex2->SetLineWidth(2);
+
+ TLatex *tex3 = new TLatex(0.24,0.926,"Preliminary");
+ tex3->SetNDC();
+ tex3->SetTextFont(52);
+ tex3->SetTextSize(0.04); 
+ tex3->SetLineWidth(2);
+
+ tex1->Draw();  
+ tex2->Draw();
+ tex3->Draw();
+
+ c1->Modified();
+ 
+ c1->Print("plotseffyBu/Bueffy_reco.png");
+ c1->Print("plotseffyBu/Bueffy_reco.pdf");
+
+ //return;
+}
